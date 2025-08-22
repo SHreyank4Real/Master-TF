@@ -1,0 +1,3 @@
+#keys will be rotated
+export AWS_ACCESS_KEY_ID="AKIA47CR23ZMF2RRO5XK"
+export AWS_SECRET_ACCESS_KEY="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"
