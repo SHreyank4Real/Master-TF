@@ -33,3 +33,6 @@ override.tf.json
 # OS-specific junk
 .DS_Store
 Thumbs.db
+
+# AWS creds
+creds.sh

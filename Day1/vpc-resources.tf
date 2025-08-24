@@ -100,7 +100,7 @@ resource "aws_route_table" "route_table_for_private_sg" {
 resource "aws_route" "private_route_for_interent" {
     route_table_id = aws_route_table.route_table_for_private_sg.id
     destination_cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat_custom_vpc.id
+    nat_gateway_id = aws_nat_gateway.nat_custom_vpc.id
 }
 resource "aws_route_table_association" "route_table_for_private_sg" {
     route_table_id = aws_route_table.route_table_for_private_sg.id
