@@ -45,26 +45,26 @@ module "route_tables" {
   subnets_for_pvtrt    = module.pvt_subnet_resource.subnet_ids
 }
 
-module "sub-security_group" {
-    #to-do seperate module needed for rule
-    source = "./security_groups"
-    depends_on = [ module.vpc_resource ]
-    sg_name = "for-pub-ec2"
-   cidr_block = "103.62.151.244/32"
-   allowed_port = "22"
-   vpc_id = module.vpc_resource.myvpc_id
-   allowed_port_to = "22"
+module "pub-security_group" {
+  #to-do seperate module needed for rule
+  source          = "./security_groups"
+  depends_on      = [module.vpc_resource]
+  sg_name         = "for-pub-ec2"
+  cidr_block      = "103.62.151.244/32"
+  allowed_port    = "22"
+  vpc_id          = module.vpc_resource.myvpc_id
+  allowed_port_to = "22"
 }
 
 module "pvt-security_group" {
-    #to-do seperate module needed for rule
-    source = "./security_groups"
-    depends_on = [ module.vpc_resource ]
-    sg_name = "for-pvt-ec2"
-   cidr_block = var.cidr_block
-   allowed_port = "22"
-   vpc_id = module.vpc_resource.myvpc_id
-   allowed_port_to = "22"
+  #to-do seperate module needed for rule
+  source          = "./security_groups"
+  depends_on      = [module.vpc_resource]
+  sg_name         = "for-pvt-ec2"
+  cidr_block      = var.cidr_block
+  allowed_port    = "22"
+  vpc_id          = module.vpc_resource.myvpc_id
+  allowed_port_to = "22"
 }
 
 data "aws_ami" "ubuntu" {
@@ -80,26 +80,41 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"] # Canonical
 }
 
-module "ec2-public" {
-  source = "./ec2"
-  security_grp = module.sub-security_group.security_group_id
-  subnetid = module.pub_subnet_resource.subnet_ids[1]
-  ami = data.aws_ami.ubuntu.id
-  ec2_size = "t2.medium"
-  ec2_name = "public-ec2"
-  volumesize = "30"
-  volumetype = "gp2"
-  root_volume_size = "20"
+resource "aws_key_pair" "name" {
+    key_name = "login"
+    public_key = tls_private_key.generated_keys.public_key_openssh
+    depends_on = [ tls_private_key.generated_keys ]
 }
 
-module "ec2-private" {
-  source = "./ec2"
-  security_grp = module.pvt-security_group.security_group_id
-  subnetid = module.pvt_subnet_resource.subnet_ids[1]
-  ami = data.aws_ami.ubuntu.id
-  ec2_size = "t2.medium"
-  ec2_name = "private-ec2"
-  volumesize = "30"
-  volumetype = "gp2"
+module "ec2-public" {
+  source           = "./ec2"
+  security_grp     = module.pub-security_group.security_group_id
+  subnetid         = module.pub_subnet_resource.subnet_ids[1]
+  ami              = data.aws_ami.ubuntu.id
+  ec2_size         = "t2.medium"
+  ec2_name         = "public-ec2"
+  volumesize       = "30"
+  volumetype       = "gp2"
   root_volume_size = "20"
+  sshkey_name      = aws_key_pair.name.key_name
+  depends_on = [ aws_key_pair.name , module.pub-security_group ]
+}
+
+output "public-ip" {
+  value = module.ec2-public.public_ip
+}
+
+
+module "ec2-private" {
+  source           = "./ec2"
+  security_grp     = module.pvt-security_group.security_group_id
+  subnetid         = module.pvt_subnet_resource.subnet_ids[1]
+  ami              = data.aws_ami.ubuntu.id
+  ec2_size         = "t2.medium"
+  ec2_name         = "private-ec2"
+  volumesize       = "30"
+  volumetype       = "gp2"
+  root_volume_size = "20"
+  sshkey_name      = aws_key_pair.name.key_name
+  depends_on = [ aws_key_pair.name ,  module.pvt-security_group]
 }

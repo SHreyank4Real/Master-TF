@@ -42,5 +42,5 @@ resource "aws_route_table_association" "pub_association" {
 resource "aws_route_table_association" "pvt_association" {
   count          = length(var.subnets_for_pvtrt)
   subnet_id      = var.subnets_for_pvtrt[count.index]
-  route_table_id = aws_route_table.pub_route_table.id
+  route_table_id = aws_route_table.pvt_route_table.id
 }
