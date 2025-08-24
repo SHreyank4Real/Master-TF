@@ -5,6 +5,7 @@ resource "aws_security_group" "custom_sg" {
     name = var.sg_name
     vpc_id = var.vpc_id
     description = var.description
+    
 }
 
 resource "aws_vpc_security_group_egress_rule" "sg_outbound_rule" {
