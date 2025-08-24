@@ -23,3 +23,7 @@ variable "security_grp" {
 variable "root_volume_size" {
   
 }
+
+variable "sshkey_name" {
+  
+}
