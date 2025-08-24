@@ -44,3 +44,62 @@ module "route_tables" {
   subnets_for_pubrt    = module.pub_subnet_resource.subnet_ids
   subnets_for_pvtrt    = module.pvt_subnet_resource.subnet_ids
 }
+
+module "sub-security_group" {
+    #to-do seperate module needed for rule
+    source = "./security_groups"
+    depends_on = [ module.vpc_resource ]
+    sg_name = "for-pub-ec2"
+   cidr_block = "103.62.151.244/32"
+   allowed_port = "22"
+   vpc_id = module.vpc_resource.myvpc_id
+   allowed_port_to = "22"
+}
+
+module "pvt-security_group" {
+    #to-do seperate module needed for rule
+    source = "./security_groups"
+    depends_on = [ module.vpc_resource ]
+    sg_name = "for-pvt-ec2"
+   cidr_block = var.cidr_block
+   allowed_port = "22"
+   vpc_id = module.vpc_resource.myvpc_id
+   allowed_port_to = "22"
+}
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+  owners = ["099720109477"] # Canonical
+}
+
+module "ec2-public" {
+  source = "./ec2"
+  security_grp = module.sub-security_group.security_group_id
+  subnetid = module.pub_subnet_resource.subnet_ids[1]
+  ami = data.aws_ami.ubuntu.id
+  ec2_size = "t2.medium"
+  ec2_name = "public-ec2"
+  volumesize = "30"
+  volumetype = "gp2"
+  root_volume_size = "20"
+}
+
+module "ec2-private" {
+  source = "./ec2"
+  security_grp = module.pvt-security_group.security_group_id
+  subnetid = module.pvt_subnet_resource.subnet_ids[1]
+  ami = data.aws_ami.ubuntu.id
+  ec2_size = "t2.medium"
+  ec2_name = "private-ec2"
+  volumesize = "30"
+  volumetype = "gp2"
+  root_volume_size = "20"
+}
